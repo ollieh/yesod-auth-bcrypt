@@ -1,4 +1,4 @@
-name:            yesod-auth-hashdb
+name:            yesod-auth-bcrypt
 version:         0.1.0
 license:         MIT
 license-file:    LICENSE
@@ -50,7 +50,7 @@ library
                    , yesod-auth
                    , bcrypt
 
-    exposed-modules: Yesod.Auth.HashDB
+    exposed-modules: Yesod.Auth.BCrypt
     ghc-options:     -Wall
 
 source-repository head
