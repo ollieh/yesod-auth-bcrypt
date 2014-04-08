@@ -10,7 +10,7 @@
 {-# LANGUAGE CPP                        #-}
 -------------------------------------------------------------------------------
 -- |
--- Module      :  Yesod.Auth.HashDB
+-- Module      :  Yesod.Auth.BCrypt
 -- Copyright   :  (c) Patrick Brisbin 2010 
 -- License     :  as-is
 --
@@ -24,7 +24,7 @@
 -- Example usage:
 --
 -- > -- import the function
--- > import Auth.HashDB
+-- > import Auth.BCrypt
 -- >
 -- > -- make sure you have an auth route
 -- > mkYesodData "MyApp" [$parseRoutes|
@@ -56,7 +56,7 @@
 --
 --
 -------------------------------------------------------------------------------
-module Yesod.Auth.HashDB
+module Yesod.Auth.BCrypt
     ( HashDBUser(..)
     , Unique (..)
     , setPassword
@@ -155,7 +155,7 @@ postLoginR :: ( YesodAuth y, YesodPersist y
               , PersistUnique (b (HandlerT y IO))
               )
            => (Text -> Maybe (Unique siteuser))
-           -> HandlerT Auth (HandlerT y IO) ()
+           -> HandlerT Auth (HandlerT y IO) TypedContent
 postLoginR uniq = do
     (mu,mp) <- lift $ runInputPost $ (,)
         <$> iopt textField "username"
@@ -164,7 +164,7 @@ postLoginR uniq = do
     isValid <- lift $ fromMaybe (return False) 
                  (validateUser <$> (uniq =<< mu) <*> mp)
     if isValid 
-       then lift $ setCreds True $ Creds "hashdb" (fromMaybe "" mu) []
+       then lift $ setCredsRedirect $ Creds "hashdb" (fromMaybe "" mu) []
        else do
            tm <- getRouteToParent
            lift $ loginErrorMessage (tm LoginR) "Invalid username/password"
@@ -195,7 +195,7 @@ getAuthIdHashDB authR uniq creds = do
             case x of
                 -- user exists
                 Just (Entity uid _) -> return $ Just uid
-                Nothing       -> loginErrorMessage (authR LoginR) "User not found"
+                Nothing       -> return Nothing
 
 -- | Prompt for username and password, validate that against a database
 --   which holds the username and a hash of the password
