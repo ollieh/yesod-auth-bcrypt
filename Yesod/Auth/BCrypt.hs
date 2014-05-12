@@ -114,7 +114,9 @@ saltedHash password = do
 setPassword :: (HashDBUser siteuser) => Text -> siteuser -> IO (siteuser)
 setPassword pwd u = do 
     hash <- saltedHash pwd
-    return $ setSaltAndPasswordHash (fromJust hash) u
+    case hash of
+        Nothing -> return u
+        Just h -> return $ setSaltAndPasswordHash h u
 
 
 ----------------------------------------------------------------
