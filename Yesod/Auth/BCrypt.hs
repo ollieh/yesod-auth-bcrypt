@@ -104,7 +104,7 @@ class HashDBUser siteuser where
 saltedHash :: Text              -- ^ Password
            -> IO (Maybe Text)
 saltedHash password = do
-   hash <- (hashPasswordUsingPolicy (HashingPolicy 10 "$2y") . BS.pack . unpack) password
+   hash <- (hashPasswordUsingPolicy (HashingPolicy 10 "$2y$") . BS.pack . unpack) password
    return $ if (isJust hash)
                 then Just $ pack $ BS.unpack $ fromJust hash
                 else Nothing
