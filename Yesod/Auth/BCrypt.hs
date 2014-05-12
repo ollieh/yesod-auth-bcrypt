@@ -56,7 +56,7 @@
 --
 --
 -------------------------------------------------------------------------------
-module Yesod.Auth.HashDB
+module Yesod.Auth.BCrypt
     ( HashDBUser(..)
     , Unique (..)
     , setPassword
