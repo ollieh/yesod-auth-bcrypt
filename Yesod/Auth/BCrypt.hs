@@ -10,8 +10,8 @@
 {-# LANGUAGE CPP                        #-}
 -------------------------------------------------------------------------------
 -- |
--- Module      :  Yesod.Auth.HashDB
--- Copyright   :  (c) Patrick Brisbin 2010 
+-- Module      :  Yesod.Auth.BCrypt
+-- Copyright   :  (c) Patrick Brisbin 2010
 -- License     :  as-is
 --
 -- Maintainer  :  pbrisbin@gmail.com
@@ -19,7 +19,7 @@
 -- Portability :  Portable
 --
 -- A yesod-auth AuthPlugin designed to look users up in Persist where
--- their user id's and a Bcrypt hash + salt of their password is stored.
+-- their user ID and a Bcrypt hash + salt of their password is stored.
 --
 -- Example usage:
 --
@@ -76,18 +76,14 @@ import Yesod.Persist
 import Yesod.Form
 import Yesod.Auth
 import Yesod.Core
-import Text.Hamlet (hamlet)
 
 import Control.Applicative         ((<$>), (<*>))
-import Control.Monad               (replicateM,liftM)
 import Data.Typeable
 
-import qualified Data.ByteString.Lazy.Char8 as LBS (pack, unpack)
 import qualified Data.ByteString.Char8 as BS (pack, unpack)
 import Crypto.BCrypt
-import Data.Text                   (Text, pack, unpack, append)
+import Data.Text                   (Text, pack, unpack)
 import Data.Maybe                  
-import System.Random               (randomRIO)
 import Prelude
 -- | Interface for data type which holds user info. It's just a
 --   collection of getters and setters
@@ -198,7 +194,7 @@ getAuthIdHashDB authR uniq creds = do
                 -- user exists
                 Just (Entity uid _) -> return $ Just uid
                 Nothing       -> do
-                  loginErrorMessage (authR LoginR) "User not found"
+                  _ <- loginErrorMessage (authR LoginR) "User not found"
                   return Nothing
 
 -- | Prompt for username and password, validate that against a database
