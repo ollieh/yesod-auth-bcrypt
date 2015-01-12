@@ -8,6 +8,7 @@
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE CPP                        #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
 -------------------------------------------------------------------------------
 -- |
 -- Module      :  Yesod.Auth.BCrypt
@@ -65,8 +66,7 @@ module Yesod.Auth.BCrypt
     , authHashDB
     , getAuthIdHashDB
       -- * Predefined data type
-    , Siteuser
-    , SiteuserGeneric (..)
+    , Siteuser (..)
     , SiteuserId
     , EntityField (..)
     , migrateSiteusers
@@ -122,11 +122,10 @@ setPassword pwd u = do
 -- | Given a user ID and password in plaintext, validate them against
 --   the database values.
 validateUser :: ( YesodPersist yesod
-                , b ~ YesodPersistBackend yesod
-                , PersistMonadBackend (b (HandlerT yesod IO)) ~ PersistEntityBackend siteuser
-                , PersistUnique (b (HandlerT yesod IO))
                 , PersistEntity siteuser
                 , HashDBUser    siteuser
+                , PersistEntityBackend siteuser ~ YesodPersistBackend yesod
+                , PersistUnique (YesodPersistBackend yesod)
                 ) => 
                 Unique siteuser     -- ^ User unique identifier
              -> Text            -- ^ Password in plaint-text
@@ -148,9 +147,8 @@ login = PluginR "hashdb" ["login"]
 --   username (whatever it might be) to unique user ID.
 postLoginR :: ( YesodAuth y, YesodPersist y
               , HashDBUser siteuser, PersistEntity siteuser
-              , b ~ YesodPersistBackend y
-              , PersistMonadBackend (b (HandlerT y IO)) ~ PersistEntityBackend siteuser
-              , PersistUnique (b (HandlerT y IO))
+              , PersistEntityBackend siteuser ~ YesodPersistBackend y
+              , PersistUnique (YesodPersistBackend y)
               )
            => (Text -> Maybe (Unique siteuser))
            -> HandlerT Auth (HandlerT y IO) TypedContent
@@ -173,9 +171,8 @@ postLoginR uniq = do
 getAuthIdHashDB :: ( YesodAuth master, YesodPersist master
                    , HashDBUser siteuser, PersistEntity siteuser
                    , Key siteuser ~ AuthId master
-                   , b ~ YesodPersistBackend master
-                   , PersistMonadBackend (b (HandlerT master IO)) ~ PersistEntityBackend siteuser
-                   , PersistUnique (b (HandlerT master IO))
+                   , PersistEntityBackend siteuser ~ YesodPersistBackend master
+                   , PersistUnique (YesodPersistBackend master)
                    )
                 => (AuthRoute -> Route master)   -- ^ your site's Auth Route
                 -> (Text -> Maybe (Unique siteuser)) -- ^ gets user ID
@@ -202,9 +199,9 @@ getAuthIdHashDB authR uniq creds = do
 authHashDB :: ( YesodAuth m, YesodPersist m
               , HashDBUser siteuser
               , PersistEntity siteuser
-              , b ~ YesodPersistBackend m
-              , PersistMonadBackend (b (HandlerT m IO)) ~ PersistEntityBackend siteuser
-              , PersistUnique (b (HandlerT m IO)))
+              , PersistEntityBackend siteuser ~ YesodPersistBackend m
+              , PersistUnique (YesodPersistBackend m)
+              )
            => (Text -> Maybe (Unique siteuser)) -> AuthPlugin m
 authHashDB uniq = AuthPlugin "hashdb" dispatch $ \tm -> toWidget [hamlet|
 $newline never
@@ -243,6 +240,6 @@ Siteuser
     deriving Typeable
 |]
 
-instance HashDBUser (SiteuserGeneric backend) where
+instance HashDBUser Siteuser where
   siteuserPasswordHash = Just . siteuserPassword
   setSaltAndPasswordHash h u = u { siteuserPassword = h }
